@@ -1,13 +1,12 @@
-import {  take, put } from 'redux-saga/effects'
+import {  takeLatest, put, call } from 'redux-saga/effects'
 import { eventChannel } from 'redux-saga'
 import { connect } from '../createSocketConnection'
 import {
     setCustomerServiceAvailability
 } from './../actions'
 
-export function* customerServiceAvailabilitySaga() {
-    const socket = connect();
-    const chan = new eventChannel(emit=>{
+export function eventChannelBuilder(eventSource) {
+    return new eventChannel(emit=>{
 
         const enableSupportMessage = ()=>{
             emit(true)
@@ -17,17 +16,23 @@ export function* customerServiceAvailabilitySaga() {
             emit(false)
         };
 
-        socket.on(`SUPPORT_AVAILABLE`,enableSupportMessage);
-        socket.on(`SUPPORT_NOT_AVAILABLE`,disableSupportMessage);
+        eventSource.on(`SUPPORT_AVAILABLE`,enableSupportMessage);
+        eventSource.on(`SUPPORT_NOT_AVAILABLE`,disableSupportMessage);
 
         return ()=>{
-            socket.off(`SUPPORT_AVAILABLE`,enableSupportMessage);
-            socket.off(`SUPPORT_NOT_AVAILABLE`,disableSupportMessage());
+            eventSource.off(`SUPPORT_AVAILABLE`,enableSupportMessage);
+            eventSource.off(`SUPPORT_NOT_AVAILABLE`,disableSupportMessage);
         }
     });
+}
 
-    while (true){
-        let supportAvailable = yield take(chan);
-        yield put(setCustomerServiceAvailability(supportAvailable));
-    }
+function* handleMessage(supportAvailable) {
+    yield put(setCustomerServiceAvailability(supportAvailable));
+}
+
+export function* customerServiceAvailabilitySaga() {
+    const socket = yield call(connect);
+    const chan = yield call(eventChannelBuilder, socket);
+
+    yield takeLatest(chan, handleMessage);
 }
