@@ -60,3 +60,5 @@ typings/
 .idea
 
 *.bundle.js*
+
+package-lock.json
