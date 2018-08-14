@@ -25,13 +25,13 @@ const logger = createLogger({
 
 export const getStore = ()=>{
     const sagaMiddleware = createSagaMiddleware();
-    const middleWares = [sagaMiddleware,thunk];
+    const middleWares = [sagaMiddleware];
     if (getQuery()['logger']) { middleWares.push(logger)}
     const composables = [applyMiddleware(...middleWares)
 //        , window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
     ];
     const enhancer = compose(
-        ... composables
+        ...composables
     );
     console.log(defaultState);
     const store = createStore(
